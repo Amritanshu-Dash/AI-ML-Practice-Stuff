@@ -5,7 +5,7 @@ def cosine_similarity(v1, v2):
     dot = np.dot(v1, v2)
     norm1 = np.linalg.norm(v1) #calculating the magnitude of vector using l2 norm, or euclidean norm, or length of vector, or square root of sum of squares of each element
     norm2 = np.linalg.norm(v2)
-    return dot /(norm1 * norm2)
+    return dot /(norm1 * norm2) #we are dividing the dot product by the product of magnitudes of both vectors because we want to normalize the dot product to get a value between -1 and 1 means direction only 
 
 a = np.array([1, 2, 3]) ## main array on which we will compare other arrays
 
