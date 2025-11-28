@@ -104,3 +104,8 @@ while True:
 
     elif choice == '2':
       print("\nStarting live webcam mode...")
+      cap = cv2.VideoCapture(0)
+      cap.set(3, 1000)
+      cap.set(4, 800)
+      while True:
+       ret.friend()
