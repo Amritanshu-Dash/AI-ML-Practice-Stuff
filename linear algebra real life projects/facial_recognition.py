@@ -103,9 +103,44 @@ while True:
     input("Press Enter to return to the menu...")
 
     elif choice == '2':
+
       print("\nStarting live webcam mode...")
       cap = cv2.VideoCapture(0)
       cap.set(3, 1000)
       cap.set(4, 800)
+
       while True:
-       ret.friend()
+       ret, frame = cap.read()
+       if not ret:
+          print("Web cam not accessible.")
+          break
+       rgb_frame = frame[:, :, ::-1]
+       locations = face_recognition.face_locations(rgb_frame)
+       encodings = face_recognition.face_encodings(rgb_frame, locations)
+
+        for (top, right, bottom, left), encoding in zip(locations, encodings):
+          matches = face_recognition.compare_faces(known_faces_encodings, encoding, tolerance=0.5)
+          name = "Unknown Person"
+          distances = face_recognition.face_distance(known_faces_encodings, encoding)
+          best = np.argmin(distances)
+          if matches[best]:
+            name = known_faces_names[best]
+            print(f"Found {name} in webcam!")
+          cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 3)
+          cv2.rectangle(frame, (left, bottom - 40), (right, bottom), (0, 255, 0), cv2.FILLED)
+          cv2.putText(frame, name, (left + 10, bottom - 10), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 2)
+
+        cv2.imshow("Webcam Face Recognition", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+          break
+
+      cap.release()
+      cv2.destroyAllWindows()
+      print("Exited live webcam mode.")
+
+  elif choice == "q":
+        print("Bye bro! Stay awesome")
+        break
+
+    else:
+        print("Invalid option! Type 1, 2, or Q")
