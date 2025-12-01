@@ -5,11 +5,10 @@ import os
 
 print("Looking for faces in known faces directory...")
 
-# creating the directory for known faces if it doesn't exist
 # ------------------- Folders -------------------
-known_people_folder = "known_people"      # Naruto, Elon photos go here
-recognising_folder = "recognising"         # Photos you want to check go here
-results_folder = "results"                 # Where output photos will be saved
+known_people_folder = "known_people"      # Put Naruto, Elon photos here
+recognising_folder = "recognising"        # Photos you want to test
+results_folder = "results"                # Results will be saved here
 
 # Create folders if they don't exist
 os.makedirs(known_people_folder, exist_ok=True)
@@ -19,128 +18,141 @@ os.makedirs(results_folder, exist_ok=True)
 known_faces_encodings = []
 known_faces_names = []
 
+# Check if known_people folder is empty
 if len(os.listdir(known_people_folder)) == 0:
-    print("Put photos in 'known_people' folder!")
+    print("Put photos in 'known_people' folder! Example: naruto.jpg, elon_musk.jpg")
     input("Press Enter to exit...")
     exit()
 
-# Loop through each file in the known faces directory
-for filename in os.listdir("known_faces"):
-  if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-    path = os.path.join("known_people", filename)
-    print(f"Processing file: path => {path} and filename => {filename}")
-    image = face_recognition.load_image_file(path)
-    encoding = face_recognition.face_encodings(image) ## Get the face encodings DNA of the face
+# Load known faces (FIXED: you wrote "known_faces" instead of "known_people")
+for filename in os.listdir(known_people_folder):
+    if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        path = os.path.join(known_people_folder, filename)
+        print(f"Loading: {filename}")
 
-    if len(encoding) > 0:
-      known_faces_encodings.append(encoding[0])
-      name = os.path.splitext(filename)[0] # Get the name without the file extension that means if file is filname.jpg it will return filename
-      known_faces_names.append(name)
-      print(f"Successfully added encoding for {name}")
-    else:
-      print(f"No faces found in the image {filename}, skipping...")
+        image = face_recognition.load_image_file(path)
+        encoding = face_recognition.face_encodings(image)
 
-#if no known faces were found, tell the user
-if (len(known_faces_encodings) == 0):
-  print("No known faces found. Please add clear images of known faces to the 'known_faces' directory.")
-  input("Press Enter to exit...")
-  exit()
+        if len(encoding) > 0:
+            known_faces_encodings.append(encoding[0])
+            name = os.path.splitext(filename)[0]
+            known_faces_names.append(name)
+            print(f"Successfully added → {name}")
+        else:
+            print(f"No face found in {filename}")
 
-else :
-  print(f"Found {len(known_faces_encodings)} known faces and name are {known_faces_names}.")
+# If no faces loaded
+if len(known_faces_encodings) == 0:
+    print("No known faces found! Add clear photos to 'known_people' folder.")
+    input("Press Enter to exit...")
+    exit()
+else:
+    print(f"\nFound {len(known_faces_encodings)} known people: {known_faces_names}\n")
 
-# ------------------- Menu -------------------
+# ------------------- Main Menu Loop -------------------
 while True:
     print("═" * 50)
-    print("       NARUTO & ELON DETECTOR PRO")
+    print("    NARUTO & ELON DETECTOR PRO")
     print("═" * 50)
-    print("Press 1 → Check all photos in 'recognising' folder")
+    print("Press 1 → Check photos in 'recognising' folder")
     print("Press 2 → Live Webcam Mode")
     print("Press Q → Quit")
     print("═" * 50)
-    choice = input("What do you want to do? (1/2/Q): ").strip().lower()
 
+    choice = input("Choose (1/2/Q): ").strip().lower()
+
+    # =============== OPTION 1: Check Photos ===============
     if choice == '1':
-      print("\nScanning all photos in 'recognising' folder...")
-      photos = [f for f in os.listdir(recognising_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        print("\nScanning 'recognising' folder...")
+        photos = [f for f in os.listdir(recognising_folder)
+                 if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-      if len(photos) == 0:
-        print("No photos found in 'recognising' folder. Please add photos to check.")
-        input("Press Enter to return to continue...")
-        continue
+        if len(photos) == 0:
+            print("No photos in 'recognising' folder!")
+            input("Press Enter to go back...")
+            continue
 
-      for photo in photos:
-        path = os.path.join(recognising_folder, photo)
-        print(f"Processing file path: {path} and photo: {photo}")
+        for photo in photos:
+            path = os.path.join(recognising_folder, photo)
+            print(f"\nChecking → {photo}")
 
-        image = face_recognition.load_image_file(path)
-        locations = face_recognition.face_locations(image)
-        encoding = face_recognition.face_encodings(image, locations)
+            image = face_recognition.load_image_file(path)
+            locations = face_recognition.face_locations(image)
+            encodings = face_recognition.face_encodings(image, locations)
+            img = cv2.imread(path)
 
-        img = cv2.imread(path)
+            if len(locations) == 0:
+                print("No face found in this photo!")
+                continue
 
-        for(top, right, bottom, left), encoding in zip(locations, encoding):
-          matches = face_recognition.compare_faces(known_faces_encodings, encoding, tolerance=0.5)
-          name = "Unknown Person"
-          distances = face_recognition.face_distance(known_faces_encodings, encoding)
-          best = np.argmin(distances)
+            for (top, right, bottom, left), encoding in zip(locations, encodings):
+                matches = face_recognition.compare_faces(known_faces_encodings, encoding, tolerance=0.5)
+                name = "Unknown Person"
 
-          if matches[best]:
-            name = known_faces_names[best]
-            print(f"Found {name} in {photo}!")
+                distances = face_recognition.face_distance(known_faces_encodings, encoding)
+                best_match = np.argmin(distances)
 
-          #draw rectangle around the face and name
-          cv2.rectangle(img, name, (left, top), (right, bottom), (0, 255, 0), 4)
-          cv2.rectangle(img, (left, bottom - 50), (right, bottom), (0, 255, 0), cv2.FILLED)
-          cv2.putText(img, name, (left + 10, bottom - 15), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 2)
+                if matches[best_match]:
+                    name = known_faces_names[best_match]
 
-          #save result image
-          output_path = os.path.join(results_folder, "RESULT_" + photo)
-          cv2.imwrite(output_path, img)
-          print(f"Result saved to {output_path}")
+                print(f"Detected: {name}")
 
-    print("Done processing all photos. check the 'results' folder for output images.")
-    input("Press Enter to return to the menu...")
+                # Draw box and name (FIXED: cv2.rectangle takes points, not name)
+                cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0), 4)
+                cv2.rectangle(img, (left, bottom - 50), (right, bottom), (0, 255, 0), cv2.FILLED)
+                cv2.putText(img, name, (left + 10, bottom - 15),
+                           cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 0), 2)
 
+            # Save result
+            output_path = os.path.join(results_folder, "RESULT_" + photo)
+            cv2.imwrite(output_path, img)
+            print(f"Saved → {output_path}")
+
+        print("\nAll photos processed! Check 'results' folder")
+        input("Press Enter to continue...")
+
+    # =============== OPTION 2: Live Webcam ===============
     elif choice == '2':
+        print("\nStarting webcam... Press 'Q' to quit")
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            print("Cannot open webcam!")
+            continue
 
-      print("\nStarting live webcam mode...")
-      cap = cv2.VideoCapture(0)
-      cap.set(3, 1000)
-      cap.set(4, 800)
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-      while True:
-       ret, frame = cap.read()
-       if not ret:
-          print("Web cam not accessible.")
-          break
-       rgb_frame = frame[:, :, ::-1]
-       locations = face_recognition.face_locations(rgb_frame)
-       encodings = face_recognition.face_encodings(rgb_frame, locations)
+            rgb_frame = frame[:, :, ::-1]  # Convert BGR to RGB
+            locations = face_recognition.face_locations(rgb_frame)
+            encodings = face_recognition.face_encodings(rgb_frame, locations)
 
-        for (top, right, bottom, left), encoding in zip(locations, encodings):
-          matches = face_recognition.compare_faces(known_faces_encodings, encoding, tolerance=0.5)
-          name = "Unknown Person"
-          distances = face_recognition.face_distance(known_faces_encodings, encoding)
-          best = np.argmin(distances)
-          if matches[best]:
-            name = known_faces_names[best]
-            print(f"Found {name} in webcam!")
-          cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 3)
-          cv2.rectangle(frame, (left, bottom - 40), (right, bottom), (0, 255, 0), cv2.FILLED)
-          cv2.putText(frame, name, (left + 10, bottom - 10), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 2)
+            for (top, right, bottom, left), encoding in zip(locations, encodings):
+                matches = face_recognition.compare_faces(known_faces_encodings, encoding, tolerance=0.5)
+                name = "Unknown Person"
 
-        cv2.imshow("Webcam Face Recognition", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-          break
+                distances = face_recognition.face_distance(known_faces_encodings, encoding)
+                best = np.argmin(distances)
+                if matches[best]:
+                    name = known_faces_names[best]
 
-      cap.release()
-      cv2.destroyAllWindows()
-      print("Exited live webcam mode.")
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 3)
+                cv2.rectangle(frame, (left, bottom - 40), (right, bottom), (0, 255, 0), cv2.FILLED)
+                cv2.putText(frame, name, (left + 10, bottom - 10),
+                           cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 2)
 
-  elif choice == "q":
-        print("Bye bro! Stay awesome")
+            cv2.imshow("Live Face Recognition - Press Q to quit", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+    # =============== QUIT ===============
+    elif choice == 'q':
+        print("Bye bro! Rasengan complete")
         break
 
     else:
-        print("Invalid option! Type 1, 2, or Q")
+        print("Invalid input! Type 1, 2, or Q")
