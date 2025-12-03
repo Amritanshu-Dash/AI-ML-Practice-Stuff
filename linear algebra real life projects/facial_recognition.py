@@ -113,8 +113,8 @@ def find_best_match(new_embedding):
     best_distance = 99.0                    # Higher = worse match
 
     # Compare the new face with EVERY known embedding
-    for person_name, known_list in known_embeddings.items():
-        for known_embedding in known_list:
+    for person_name, embedding_list in known_embeddings.items():
+        for known_embedding in embedding_list:
             # Calculate how similar two faces are (0 = identical, 1+ = different)
             distance = np.linalg.norm(new_embedding - known_embedding)
 
@@ -123,10 +123,10 @@ def find_best_match(new_embedding):
                 best_name = person_name
 
     # Only accept if similarity is good enough (threshold = 0.55)
-    if best_distance < 0.55:
-        return best_name, 1 - best_distance   # Return name + confidence (0-1)
+    if best_distance < 0.6:
+        return best_name, 1 - best_distance   # Return name + confidence (0-1) so best_distance is lower is better and it confidence is higher is better 1 - distance
     else:
-        return "Unknown", 0.0
+        return "Unknown", best_distance
 
 # ===================================================================
 # STEP 5: MAIN MENU — CHOOSE WHAT TO DO
@@ -159,28 +159,30 @@ while True:
             photo_path = os.path.join(test_folder, photo_name)
             print(f"\nAnalyzing: {photo_name}")
             image = cv2.imread(photo_path)
-            detected_faces = app.get(image)        # Find all faces in this photo
+            detected_faces = app.get(image) # Find all faces in this photo
+            print(f"  Found {len(detected_faces)} face(s) in {photo_name}")
+            if len(detected_faces) == 0:
+                print("  NO FACE DETECTED — check photo quality!")
+                # Still save image so you can see
+                cv2.putText(image, "NO FACE FOUND", (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1.5, (0, 0, 255), 3)
+            else:
+                for face in detected_faces:
+                    name, confidence = find_best_match(face.embedding)
+                    detected_name = name.strip().lower()
+                    display_name = name
+                    print(f"  DETECTED → photo : {photo_name} : {display_name} (confidence: {confidence:.3f})")
+                    # Draw green box around face
+                    bbox = face.bbox.astype(int)
+                    is_known = any(detected_name == known.strip().lower() for known in known_embeddings.keys())
+                    if is_known:
+                        color = (0, 255, 0)  # Green for known faces
+                        label = f"{display_name} ({confidence:.2f})"
+                    else:
+                        color = (0, 0, 255)  # Red for unknown faces
+                        label = "Unknown"
 
-            for face in detected_faces:
-                name, confidence = find_best_match(face.embedding)
-                print(f"  DETECTED → {name.upper()} (confidence: {confidence:.3f})")
-                detected_name = name.lower()
-                # Draw green box around face
-                x1, y1, x2, y2 = face.bbox.astype(int)
-                if detected_name in [k.lower() for k in known_embeddings.keys()]:
-                  color = (0, 255, 0) # Green for known faces
-                  label = f"{name} {confidence:.2f}"
-                else:
-                  color = (0, 0, 255) # Red for unknown faces
-                  label = "Unknown"
-                thickness = 4
-
-                # Draw rectangle around faces
-                cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
-
-                # Write name above the box
-                cv2.putText(image, label, (x1, y1-15),
-                           cv2.FONT_HERSHEY_DUPLEX, 1.2, color, 3)
+                    cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, thickness=6)
+                    cv2.putText(image, label, (bbox[0], bbox[1]-20), cv2.FONT_HERSHEY_DUPLEX, 1.4, color, 3)
 
             # Save result
             output_path = os.path.join(result_folder, "RESULT_" + photo_name)
