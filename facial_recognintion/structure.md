@@ -1,7 +1,7 @@
 face_recognition_system/
 │
 ├── main.py                     # Menu + launcher
-├── config.py                   # All paths, thresholds, settings
+├── config.py                   # All paths, thresholds, settings ---
 ├── model/
 │   ├── face_analyzer.py        # Load InsightFace once ---
 │   └── embedding_extractor.py  # Get embeddings + bbox
@@ -21,7 +21,7 @@ face_recognition_system/
 ├── utils/
 │   ├── logger.py               # Excel + console logging
 │   ├── folder_manager.py       # Create result subfolders
-│   └── excel_writer.py         # Generate Training_Log.xlsx & Testing_Log.xlsx
+│   └── excel_writer.py         # Generate Training_Log.xlsx & Testing_Log.xlsx ---
 │
 ├── known_people/               # Training data
 │   ├── elon_musk/
