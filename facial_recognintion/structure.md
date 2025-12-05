@@ -12,7 +12,7 @@ face_recognition_system/
 │
 ├── recognition/
 │   ├── recognizer.py           # Core matching logic (with real/anime detection)
-│   └── style_classifier.py    # NEW: Detect if face is Real or Anime (critical!)
+│   └── style_classifier.py    # NEW: Detect if face is Real or Anime (critical!) --- 
 │
 ├── testing/
 │   ├── batch_tester.py         # Test entire folders
