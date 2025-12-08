@@ -1,6 +1,6 @@
 face_recognition_system/
 │
-├── main.py                     # Menu + launcher
+├── main.py                     # Menu + launcher ---
 ├── config.py                   # All paths, thresholds, settings ---
 ├── model/
 │   ├── face_analyzer.py        # Load InsightFace once ---
