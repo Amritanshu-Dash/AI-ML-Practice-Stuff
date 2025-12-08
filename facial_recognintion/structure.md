@@ -11,8 +11,8 @@ face_recognition_system/
 │   └── known_embeddings.pkl    # Saved after training
 │
 ├── recognition/
-│   ├── recognizer.py           # Core matching logic (with real/anime detection)
-│   └── style_classifier.py    # NEW: Detect if face is Real or Anime (critical!) --- 
+│   ├── recognizer.py           # Core matching logic (with real/anime detection) ---
+│   └── style_classifier.py    # NEW: Detect if face is Real or Anime (critical!) ---
 │
 ├── testing/
 │   ├── batch_tester.py         # Test entire folders
