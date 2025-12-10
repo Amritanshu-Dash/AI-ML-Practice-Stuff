@@ -10,16 +10,25 @@ def log_training(training_data):
     Called after training
     training_data = list of dictionaries → e.g. [{"Person/Class": "Elon Musk", "Photos Trained": 87}]
   """
+  if not training_data:
+    print("No training data to log!")
+    return
+
   # Turn the data into a nice table
   df = pd.DataFrame(training_data)
   df["Training Date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-  df = df.sort_values("Photos Trained", ascending=False)
+
+  # Only sort if column exists and has data
+  if "Photos Trained" in df.columns and len(df) > 0:
+    df = df.sort_values("Photos Trained", ascending=False)
+
+  path = RESULTS_FOLDER / "Training_Log.xlsx"
 
   #save to excel and creates the file if it doesn't exists.
   try:
-    with pd.ExcelWriter(TRAINING_LOG_FILE, engine='openpyxl', mode='w') as writer:
-      df.to_excel(writer, sheet_name='All_Time_Training', index=False)
-    print(f"Training report saved → {TRAINING_LOG_FILE}")
+    with pd.ExcelWriter(path, engine='openpyxl') as writer:
+      df.to_excel(writer, sheet_name="Training_History", index=False)
+    print(f"Training log saved → {path}")
   except Exception as e:
     print(f"Could not save training log: {e}")
 
